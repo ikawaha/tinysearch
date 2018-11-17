@@ -1,9 +1,5 @@
 package tinysearch
 
-import (
-	"sort"
-)
-
 type ScoredDocID struct {
 	DocID int
 	Score int // 同じドキュメントで何回出てくるか
@@ -19,57 +15,33 @@ type Searcher struct {
 	invertedIndex InvertedIndex
 }
 
-type tokenSorter struct {
-	tokens []Token
-	by     ByIndexCounts
-}
-
-type ByIndexCounts struct {
-	invertedIndex InvertedIndex
-}
-
-func (by ByIndexCounts) Sort(tokens []Token) {
-	ts := tokenSorter{
-		tokens: tokens,
-		by:     by,
-	}
-	sort.Sort(&ts)
-}
-
-func (s tokenSorter) Len() int      { return len(s.tokens) }
-func (s tokenSorter) Swap(i, j int) { s.tokens[i], s.tokens[j] = s.tokens[j], s.tokens[i] }
-func (s tokenSorter) Less(i, j int) bool {
-	a := s.by.invertedIndex[s.tokens[i].Term]
-	b := s.by.invertedIndex[s.tokens[j].Term]
-	return len(a) < len(b)
-}
-
 func (s Searcher) Search(query string) (SearchResult, error) {
-	var ret SearchResult
-	ret.Query = query
-
+	ret := SearchResult{
+		Query: query,
+	}
 	tokens := s.analyzer.Tokenize(query)
+	if len(tokens) == 0 {
+		return ret, nil
+	}
 	ByIndexCounts{invertedIndex: s.invertedIndex}.Sort(tokens)
-
-	cursors := map[string]int{}
-
-	basis := s.invertedIndex[tokens[0].Term] //基準となるPostingList
+	cursors := make([]int, len(tokens)-1)
+	basis := s.invertedIndex[tokens[0].Term]
 loop:
-	for j := range basis { // 最初の token のポスティングリストを基準に
-		for _, v := range tokens[1:] { // 残りの token のポスティングリストを見ていく
+	for j := range basis {
+		for i, v := range tokens[1:] {
 			pl := s.invertedIndex[v.Term]
 			var ok bool
-			for k := cursors[v.Term]; k < len(pl); k++ { // カーソルを持っておくと begin を決められる
+			for k := cursors[i]; k < len(pl); k++ {
 				if basis[j].DocID < pl[k].DocID {
-					cursors[v.Term] = k
+					cursors[i] = k
 					continue loop
 				} else if basis[j].DocID == pl[k].DocID {
-					cursors[v.Term] = k + 1
+					cursors[i] = k + 1
 					ok = true
 					break
 				}
 			}
-			if !ok { // ok でないときは候補がなくなってしまったとき
+			if !ok {
 				break loop
 			}
 		}

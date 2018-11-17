@@ -2,33 +2,11 @@ package tinysearch
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
-func TestByIndexCounts_Sort(t *testing.T) {
-	store := NewJSONStorage("/tmp", "index.json")
-	analyzer := NewNgramAnalyzer(2)
-	indexer := NewIndexer(analyzer, store)
-
-	docs := []string{
-		"Doc1!hello",
-		"Doc2!world",
-		"ドキュメント3!こんにちは",
-	}
-
-	for i, d := range docs {
-		indexer.AddDocument(i, Document{ID: i, Text: d})
-	}
-
-	doc := "Doc!hello"
-	tokens := analyzer.Tokenize(doc)
-	fmt.Println(tokens)
-	ByIndexCounts{indexer.Index}.Sort(tokens)
-	fmt.Println("sorted:", tokens)
-
-}
-
-func TestSeacher_Search(t *testing.T) {
+func TestSearcher_Search(t *testing.T) {
 	t.Run("図4-1", func(t *testing.T) {
 		ii := InvertedIndex{
 			"きょ": {
