@@ -33,7 +33,7 @@ func TestSearcher_Search(t *testing.T) {
 			invertedIndex: ii,
 		}
 		docs, err := s.Search("きょうは")
-		fmt.Println(docs, err)
+		fmt.Println(docs, err) //TODO ここを assertion する
 	})
 	t.Run("DocID:15が検出される", func(t *testing.T) {
 		ii := InvertedIndex{

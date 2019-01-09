@@ -107,7 +107,7 @@ loop:
 			}
 		}
 		ret = true
-		fmt.Printf("phrase detect!, pos=%v\n", x)
+		fmt.Printf("phrase detect!, pos=%v\n", x) //TODO 記録する必要があるか？
 	}
 
 	return ret
