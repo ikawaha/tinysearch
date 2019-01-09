@@ -15,13 +15,13 @@ type Searcher struct {
 	invertedIndex InvertedIndex
 }
 
-func (s Searcher) Search(query string) (SearchResult, error) {
+func (s Searcher) Search(query string) (*SearchResult, error) {
 	ret := SearchResult{
 		Query: query,
 	}
 	tokens := s.analyzer.Tokenize(query)
 	if len(tokens) == 0 {
-		return ret, nil
+		return &ret, nil
 	}
 	ByIndexCounts{invertedIndex: s.invertedIndex}.Sort(tokens)
 	cursors := make([]int, len(tokens)-1)
@@ -31,12 +31,12 @@ loop:
 		for i, v := range tokens[1:] {
 			pl := s.invertedIndex[v.Term]
 			var ok bool
-			for k := cursors[i]; k < len(pl); k++ {
+			for k := cursors[i] + 1; k < len(pl); k++ {
 				if basis[j].DocID < pl[k].DocID {
-					cursors[i] = k
+					cursors[i] = k - 1
 					continue loop
 				} else if basis[j].DocID == pl[k].DocID {
-					cursors[i] = k + 1
+					cursors[i] = k
 					ok = true
 					break
 				}
@@ -45,7 +45,10 @@ loop:
 				break loop
 			}
 		}
-		ret.Docs = append(ret.Docs, ScoredDocID{DocID: basis[j].DocID}) //XXX スコア未実装
+
+		ret.Docs = append(ret.Docs, ScoredDocID{
+			DocID: basis[j].DocID, // note ここではまだスコアが決まらない
+		})
 	}
-	return ret, nil
+	return &ret, nil
 }

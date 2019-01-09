@@ -2,7 +2,6 @@ package tinysearch
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 )
 

@@ -22,7 +22,7 @@ type tokenSorter struct {
 func (s tokenSorter) Len() int      { return len(s.tokens) }
 func (s tokenSorter) Swap(i, j int) { s.tokens[i], s.tokens[j] = s.tokens[j], s.tokens[i] }
 func (s tokenSorter) Less(i, j int) bool {
-	s.by.Less(s.tokens[i].Term, s.tokens[j].Term)
+	return s.by.Less(s.tokens[i].Term, s.tokens[j].Term)
 }
 
 type ByIndexCounts struct {
