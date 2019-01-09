@@ -55,12 +55,12 @@ loop:
 		for i, v := range tokens[1:] {
 			pl := s.invertedIndex[v.Term]
 			var ok bool
-			for k := docCursors[i] + 1; k < len(pl); k++ {
+			for k := docCursors[i]; k < len(pl); k++ {
 				if basis[j].DocID < pl[k].DocID {
-					docCursors[i] = k - 1
+					docCursors[i] = k
 					continue loop
 				} else if basis[j].DocID == pl[k].DocID {
-					docCursors[i] = k
+					docCursors[i] = k + 1
 					phraseCursors[i+1].index = v.ID
 					phraseCursors[i+1].positions = pl[k].Positions
 					ok = true
@@ -82,23 +82,22 @@ loop:
 }
 
 func (s Searcher) phraseCheck(ps []phraseCursor) bool {
-
 	sort.Sort(&phraseCursorSorter{cursors: ps})
 	cursors := make([]int, len(ps))
-
+	var ret bool
 loop:
 	for n := 0; n < len(ps[0].positions); n++ {
 		x := ps[0].positions[n] - ps[0].index
 		for i := 1; i < len(ps); i++ {
 			ph := ps[i]
 			var ok bool
-			for j := cursors[i] + 1; j < len(ph.positions); j++ {
+			for j := cursors[i]; j < len(ph.positions); j++ {
 				v := ph.positions[j] - ph.index
 				if x < v {
-					cursors[j] = j - 1
+					cursors[j] = j
 					continue loop
 				} else if v == x {
-					cursors[i] = j
+					cursors[i] = j + 1
 					ok = true
 					break
 				}
@@ -107,8 +106,9 @@ loop:
 				continue loop
 			}
 		}
+		ret = true
 		fmt.Printf("phrase detect!, pos=%v\n", x)
 	}
 
-	return true
+	return ret
 }
