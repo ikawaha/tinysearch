@@ -29,7 +29,7 @@ L:
 				break L
 			}
 		}
-		ret = append(ret, Token{Term: s[i : i+l], Start: i, End: i + l})
+		ret = append(ret, Token{ID: len(ret), Term: s[i : i+l], Start: i, End: i + l})
 		i += l0
 	}
 	return ret

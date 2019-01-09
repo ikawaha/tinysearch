@@ -5,9 +5,10 @@ import (
 )
 
 type Token struct {
-	Term  string
+	ID    int
 	Start int
 	End   int
+	Term  string
 }
 
 type StringComparator interface {
