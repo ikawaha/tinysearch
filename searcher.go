@@ -1,5 +1,10 @@
 package tinysearch
 
+import (
+	"fmt"
+	"sort"
+)
+
 type ScoredDocID struct {
 	DocID int
 	Score int // 同じドキュメントで何回出てくるか
@@ -18,6 +23,16 @@ type Searcher struct {
 type phraseCursor struct {
 	index     int
 	positions []int
+}
+
+type phraseCursorSorter struct {
+	cursors []phraseCursor
+}
+
+func (s phraseCursorSorter) Len() int      { return len(s.cursors) }
+func (s phraseCursorSorter) Swap(i, j int) { s.cursors[i], s.cursors[j] = s.cursors[j], s.cursors[i] }
+func (s phraseCursorSorter) Less(i, j int) bool {
+	return len(s.cursors[i].positions) < len(s.cursors[j].positions)
 }
 
 func (s Searcher) Search(query string) (*SearchResult, error) {
@@ -67,5 +82,33 @@ loop:
 }
 
 func (s Searcher) phraseCheck(ps []phraseCursor) bool {
+
+	sort.Sort(&phraseCursorSorter{cursors: ps})
+	cursors := make([]int, len(ps))
+
+loop:
+	for n := 0; n < len(ps[0].positions); n++ {
+		x := ps[0].positions[n] - ps[0].index
+		for i := 1; i < len(ps); i++ {
+			ph := ps[i]
+			var ok bool
+			for j := cursors[i] + 1; j < len(ph.positions); j++ {
+				v := ph.positions[j] - ph.index
+				if x < v {
+					cursors[j] = j - 1
+					continue loop
+				} else if v == x {
+					cursors[i] = j
+					ok = true
+					break
+				}
+			}
+			if !ok {
+				continue loop
+			}
+		}
+		fmt.Printf("phrase detect!, pos=%v\n", x)
+	}
+
 	return true
 }
