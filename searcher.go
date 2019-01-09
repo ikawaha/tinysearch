@@ -57,16 +57,15 @@ loop:
 			}
 		}
 
-		if score, ok := s.phraseCheck(phraseCursors); ok {
+		if ok := s.phraseCheck(phraseCursors); ok {
 			ret.Docs = append(ret.Docs, ScoredDocID{
-				DocID: basis[j].DocID,
-				Score: score,
+				DocID: basis[j].DocID, // score はまだ決まらない
 			})
 		}
 	}
 	return &ret, nil
 }
 
-func (s Searcher) phraseCheck(ps []phraseCursor) (int, bool) {
-	return 0, true
+func (s Searcher) phraseCheck(ps []phraseCursor) bool {
+	return true
 }
