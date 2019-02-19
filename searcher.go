@@ -11,7 +11,7 @@ type ScoredDocID struct {
 }
 
 type SearchResult struct {
-	Query string
+	Query Query
 	Docs  []ScoredDocID
 }
 
@@ -35,11 +35,11 @@ func (s phraseCursorSorter) Less(i, j int) bool {
 	return len(s.cursors[i].positions) < len(s.cursors[j].positions)
 }
 
-func (s Searcher) Search(query string) (*SearchResult, error) {
+func (s Searcher) Search(q Query) (*SearchResult, error) {
 	ret := SearchResult{
-		Query: query,
+		Query: q,
 	}
-	tokens := s.analyzer.Tokenize(query)
+	tokens := s.analyzer.Tokenize(q.Raw)
 	if len(tokens) == 0 {
 		return &ret, nil
 	}
@@ -71,11 +71,19 @@ loop:
 				break loop
 			}
 		}
-
-		if ok := s.phraseCheck(phraseCursors); ok {
+		switch q.QueryType {
+		case Default:
 			ret.Docs = append(ret.Docs, ScoredDocID{
 				DocID: basis[j].DocID, // score はまだ決まらない
 			})
+		case Phrase:
+			if ok := s.phraseCheck(phraseCursors); ok {
+				ret.Docs = append(ret.Docs, ScoredDocID{
+					DocID: basis[j].DocID, // score はまだ決まらない
+				})
+			}
+		default:
+			return nil, fmt.Errorf("not implemented, query type =%v", q.QueryType)
 		}
 	}
 	return &ret, nil
@@ -109,6 +117,5 @@ loop:
 		ret = true
 		fmt.Printf("phrase detect!, pos=%v\n", x) //TODO 記録する必要があるか？
 	}
-
 	return ret
 }
